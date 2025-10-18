@@ -1,35 +1,55 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useEffect, useState } from 'react'
+import TodoForm from './TodoForm';
+import TodoList from './TodoList';
 
-function App() {
-  const [count, setCount] = useState(0)
+export const FormContext = React.createContext()
+export const ListContext = React.createContext()
+
+export default function App() {
+  const [todo, setTodo] = useState(()=>{
+    var localValue = localStorage.getItem("ITEMS");
+    if(localValue){
+      return JSON.parse(localValue)
+    }
+    return []
+  })
+
+  function addTodo(value){
+    setTodo([...todo, {id:Date.now(), value: value, completed: false}])
+  }
+
+  useEffect(()=>{
+    localStorage.setItem("ITEMS", JSON.stringify(todo))
+  },[todo])
+
+  function deleteTodo(id){
+    setTodo(todo.filter(val=> val.id !== id))
+  }
+
+  function handleCheckbox(id){
+    setTodo(
+      todo.map(val => {
+        if(val.id === id){
+          return {...val, completed: !val.completed}
+        }else{
+          return val
+        }
+      })
+    )
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <FormContext.Provider value={addTodo}>
+        <h1>Todo App with React</h1>
+        <TodoForm />
+      </FormContext.Provider>
+
+      <ListContext.Provider value={[todo, handleCheckbox, deleteTodo]}>
+        <h2>List</h2>
+        <TodoList />
+      </ListContext.Provider>      
     </>
+   
   )
 }
-
-export default App
